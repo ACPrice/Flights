@@ -1,0 +1,314 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Where'd Everyone Go?</title>
+    
+    <script src="assets/jquery.js"></script>
+    <script src="assets/d3.js"></script>
+    <link rel="stylesheet" type="text/css" href="assets/style.css">
+    <script src="data/world-countries.js"></script>
+    <script src="data/flight-data.js"></script>
+
+  </head>
+  
+  <body>
+  
+  	The number of flights from the United Kingdom to other countries, by month.</br>
+  	Created using a massive dataset of airline bookings and d3.js.
+  
+  	<div id="viz">
+    </div>
+    
+
+    <div id="cal">
+    </div>
+    <a href='#' class='jan'>January</a>
+    <a href='#' class='feb'>February</a>
+    <a href='#' class='mar'>March</a>
+    <a href='#' class='apr'>April</a>
+    <a href='#' class='may'>May</a>
+    <a href='#' class='june'>June</a>
+    <a href='#' class='july'>July</a>
+    <a href='#' class='aug'>August</a>
+    <a href='#' class='sept'>September</a>
+    <a href='#' class='oct'>October</a>
+    <a href='#' class='nov'>November</a>
+    <a href='#' class='dec'>December</a>
+      
+    <script>
+      var height = 500;
+      var width = 860;
+      var svg = d3.select('#viz').append('svg')
+                                    .attr('height', height)
+                                    .attr('width', width)
+      
+      var countriesData = window.countriesData;
+      // This is a big list of all the countries in the world 
+      // in a format that d3 likes
+      
+      // The flight data.
+      var sizeData = window.flightData;
+      
+      // A scale to manage the size of the circles.
+      var rScale = d3.scale.log();
+      rScale.domain([1, 150000]).range([4, 70])
+
+      // A scale to manage the opacity of the circles.
+      var oScale = d3.scale.log();
+      oScale.domain([1, 150000]).range([.5, .04])
+		
+
+    </script>
+
+    
+    <script>
+      // Setup a mercator projection to map latitudes and 
+      // longitudes to pixels.
+      // More projections: 
+      // https://github.com/mbostock/d3/wiki/Geo-Projections
+      
+      var projection = d3.geo.mercator()
+                               .scale(880)
+                               .translate([410, 320])
+      
+      
+      // Setup a geo path
+      // Geo path takes geoJSON and draws those shapes onto projection
+      
+      var path = d3.geo.path().projection(projection)
+
+      
+      // Take the list of countries and draw it
+      // using the path
+      //
+      // All countries are under a 'countries' group
+      // to make them easier to work with
+      //
+      // The 'path' element is  
+      // a freeform path that joins points to make a shape.
+      //
+      // The 'path' generator that's passed to .attr('d', path) takes
+      // the geo data and draws a path
+
+      var countries = svg.append('g') // make a group to hold them all
+
+      countries.selectAll('path')
+                  .data(countriesData.features)
+                  .enter()
+                  .append('path')
+                  .attr('d', path) // uses the path to draw the countries
+    
+
+      function calculateCountryCenter(country) {
+      
+      	var coords;
+        
+        //Check if the country has more than one bounding region.
+        if (country.geometry.coordinates.length > 1) {
+        	
+        	coords = country.geometry.coordinates[0][0];
+        	
+        	regionArea = path.area(country.geometry.coordinates[0]);
+        	
+        	for (var i=0; i<country.geometry.coordinates.length; i++) {
+        		if (path.area(country.geometry.coordinates[i]) > regionArea) {
+        		
+        			coords = country.geometry.coordinates[i][0];
+        		}
+        	}     
+                
+        } else {	
+        	coords = country.geometry.coordinates[0];
+        }
+
+        var averageCoords = [0,0];
+        coords.forEach(function(coord) {
+        	averageCoords[0] += coord[0]
+          	averageCoords[1] += coord[1]
+        });
+
+        averageCoords[0] = averageCoords[0] / coords.length
+        averageCoords[1] = averageCoords[1] / coords.length
+        return averageCoords;
+        
+    }
+    
+    var countryCirclesGroup = svg.append('g') // a group to hold our circles
+    
+    // Bind the data to the country circles group. Bind on country id (see json file)
+    var countryCircles = countryCirclesGroup.selectAll('circle')
+    	.data(countriesData.features, function(country) { return country.id })
+                            
+    // Enter a circle for each data point, with pos. at x and y coords.	
+    countryCircles.enter().append('circle')
+    	.attr('r', 0)
+        .attr('cx', function(country) {
+            var center = calculateCountryCenter(country);
+            return projection(center)[0] // return x coord of mapped center
+            })
+        .attr('cy', function(country) {
+            var center = calculateCountryCenter(country);
+            return projection(center)[1] // return y coord of mapped center
+            })
+        .style('fill', 'black')
+        .style('opacity', .15)
+        .on('click', function(country) { alert(country.properties.name) })
+                      
+		
+		// Functions for the month buttons.
+		function showJan() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Jan + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Jan + 1) })
+        }
+        
+        			
+        function showFeb() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Feb + 1) })
+					.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Feb + 1) })
+
+		}
+		
+		function showMar() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Mar + 1) })
+					.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Mar + 1) })
+        			
+		}	
+		
+		function showApr() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Apr + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Apr + 1) })
+
+		}		
+                                
+		function showMay() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.May + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.May + 1) })
+		}  
+		
+		function showJune() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Jun + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Jun + 1) })
+		}
+		
+		function showJuly() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Jul + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Jul + 1) })
+		}				    
+
+		function showAug() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Aug + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Aug + 1) })
+		}	
+
+		function showSept() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Sep + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Sep + 1) })
+		}	
+
+		function showOct() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Oct + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Oct + 1) })
+		}	
+
+		function showNov() {
+		
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Nov + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Nov + 1) })
+		}
+		
+		function showDec() {
+		
+			// This sets the circles with size data as a certain size and as red.
+        	countryCirclesGroup.selectAll('circle')
+        		.data(sizeData, function(dataPoint) { return dataPoint.name })
+        			.transition().duration(1000)
+        			.attr('r', function(dataPoint) { return rScale(dataPoint.Dec + 1) })
+        			.style('fill', 'black')
+        			.style('opacity', function(dataPoint) { return oScale(dataPoint.Dec + 1) })
+		}		
+                                
+      // A reset function for debugging help. Rewrite to show Jan sizes.
+      function reset() {
+            countryCirclesGroup.selectAll('circle')
+        		.data(sizeData)
+        		.transition().duration(1000)
+                .attr('r', 0)
+      }                     
+      
+      
+      d3.select('a.jan').on('click', showJan)
+      d3.select('a.feb').on('click', showFeb)
+      d3.select('a.mar').on('click', showMar)
+      d3.select('a.apr').on('click', showApr)
+      d3.select('a.may').on('click', showMay)
+      d3.select('a.june').on('click', showJune)
+      d3.select('a.july').on('click', showJuly)
+      d3.select('a.aug').on('click', showAug)
+      d3.select('a.sept').on('click', showSept)
+      d3.select('a.oct').on('click', showOct)
+      d3.select('a.nov').on('click', showNov)
+      d3.select('a.dec').on('click', showDec)
+      
+    </script>
+    
+    <script>
+    	//Don't delete this
+  		reset();
+    </script>
+  
+  </body>
+</html>

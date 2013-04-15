@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Where's Everyone Going?</title>
+    
+    <script src="assets/jquery.js"></script>
+    <script src="assets/d3.js"></script>
+    <link rel="stylesheet" type="text/css" href="assets/style.css">
+    <script src="data/world-countries.js"></script>
+
+  </head>
+  <body>
+    
+    <h1>Where's Everyone Going?</h1>
+
+    <div id="viz">
+    </div>
+    
+    <div id="cal">
+    <a href='#' class='jan'>January</a>
+    <a href='#' class='feb'>February</a>
+    <a href='#' class='mar'>March</a>
+    <a href='#' class='apr'>April</a>
+    <a href='#' class='may'>May</a>
+    <a href='#' class='june'>June</a>
+    <a href='#' class='july'>July</a>
+    <a href='#' class='aug'>August</a>
+    <a href='#' class='sept'>September</a>
+    <a href='#' class='oct'>October</a>
+    <a href='#' class='nov'>November</a>
+    <a href='#' class='dec'>December</a>
+    </div>
+      
+    <script>
+      var height = 530;
+      var width = 960;
+      var svg = d3.select('#viz').append('svg')
+                                    .attr('height', height)
+                                    .attr('width', width)
+      
+      var countriesData = window.countriesData;
+      // This is a big list of all the countries in the world 
+      // in a format that d3 likes
+    </script>
+
+    
+    <script>
+      // Setup a mercator projection
+      // A projection is a bit like a scale except it maps 
+      // latitudes and longitudes to pixels
+      // There are a lot of projections:
+      // https://github.com/mbostock/d3/wiki/Geo-Projections
+      
+      var projection = d3.geo.mercator()
+                               .scale(680)
+                               .translate([480, 350])
+      
+      
+      // Setup a geo path
+      // A path is a magical path drawer, that can take things
+      // listed in a geo format called geojson (lots of geo data
+      // is formatted like this) and draws those shapes onto your
+      // projection
+      
+      var path = d3.geo.path().projection(projection)
+
+      
+      // Take our loaded big list of countries and draw it
+      // using our path
+      //
+      // All countries are under a 'countries' group
+      // to make them easier to work with
+      //
+      // The 'path' element is just 
+      // a freeform path that joins points to make a shape.
+      //
+      // The 'path' generator that we pass to .attr('d', path) takes
+      // the geo data and draws a path
+
+      var countries = svg.append('g') // make a group to hold them all
+
+      countries.selectAll('path')
+                  .data(countriesData.features)
+                .enter().append('path')
+                  .attr('d', path) // uses our path to draw the countries
+    
+
+      
+    </script>
+  </body>
+</html>
