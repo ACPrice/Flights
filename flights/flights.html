@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Where'd Everyone Go?</title>
+    <title>Brits on Holiday</title>
     
     <script src="assets/jquery.js"></script>
     <script src="assets/d3.js"></script>
@@ -13,15 +13,14 @@
   
   <body>
   
-  	The number of flights from the United Kingdom to other countries, by month.</br>
-  	Created using a massive dataset of airline bookings and d3.js.
+  	<h1>Brits on Holiday</h2>
+  
+  	<p>The number of flights from the U.K. to other countries, by month. Created with
+  	 a massive airline bookings dataset and d3.</p>
   
   	<div id="viz">
     </div>
     
-
-    <div id="cal">
-    </div>
     <a href='#' class='jan'>January</a>
     <a href='#' class='feb'>February</a>
     <a href='#' class='mar'>March</a>
@@ -36,7 +35,7 @@
     <a href='#' class='dec'>December</a>
       
     <script>
-      var height = 500;
+      var height = 485;
       var width = 860;
       var svg = d3.select('#viz').append('svg')
                                     .attr('height', height)
@@ -69,7 +68,7 @@
       
       var projection = d3.geo.mercator()
                                .scale(880)
-                               .translate([410, 320])
+                               .translate([410, 310])
       
       
       // Setup a geo path
@@ -107,16 +106,29 @@
         if (country.geometry.coordinates.length > 1) {
         	
         	coords = country.geometry.coordinates[0][0];
-        	
-        	regionArea = path.area(country.geometry.coordinates[0]);
-        	
-        	for (var i=0; i<country.geometry.coordinates.length; i++) {
-        		if (path.area(country.geometry.coordinates[i]) > regionArea) {
-        		
-        			coords = country.geometry.coordinates[i][0];
-        		}
-        	}     
-                
+
+			var largestRegion = {        
+    					"type": "Feature",
+    					"geometry": {
+    						"type": "Polygon", 
+    						"coordinates": country.geometry.coordinates[0]},        	
+    		};
+
+			for (var i=1; i<country.geometry.coordinates.length; i++) {
+
+				var polyRegion = {        
+    					"type": "Feature",
+    					"geometry": {
+    						"type": "Polygon", 
+    						"coordinates": country.geometry.coordinates[i]},        	
+    			};
+		    
+				if (path.area(polyRegion) > path.area(largestRegion)) {
+					largestRegion = polyRegion;	
+					coords = country.geometry.coordinates[i][0];    
+		    	}
+		    }
+		                    
         } else {	
         	coords = country.geometry.coordinates[0];
         }
